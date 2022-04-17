@@ -20,7 +20,34 @@ public class MineField {
             }
         }
         return field;
+    }
 
+    public void populateMinesCount(){
+        for (int i = 0; i < this.field.length; i++) {
+            for (int j = 0; j < this.field[i].length; j++) {
+                if (!this.field[i][j].equals("X")) {
+                    this.field[i][j] = calculateMinesCount(i, j);
+                }
+            }
+        }
+    }
+
+    private String calculateMinesCount(int r, int c) {
+        int count = 0;
+        for (int i = r -1; i <= r + 1 ; i++) {
+            for (int j = c - 1; j <= c + 1 ; j++) {
+                if (indexesAreValid(i, j) && !(i == r && j == c)) {
+                    if (this.field[i][j].equals("X")) {
+                        count++;
+                    }
+                }
+            }
+        }
+        return count==0 ? "." : String.valueOf(count);
+    }
+
+    private boolean indexesAreValid(int i, int j) {
+        return i >= 0 && i < this.field.length && j >= 0 && j < this.field[0].length;
     }
 
     private void placeMines(int numMines) {
@@ -34,7 +61,6 @@ public class MineField {
                 i--;
             }
         }
-
     }
 
     public void printFied() {
