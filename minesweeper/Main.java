@@ -10,7 +10,7 @@ public class Main {
         MineField mineField = new MineField(Integer.parseInt(scanner.nextLine()));
         mineField.populateMinesCount();
 //        mineField.hideBombs();
-        mineField.printHiddemBombs();
+        mineField.printHiddenBombs();
         while(!mineField.allBombsAreMarked()) {
             System.out.println("Set/delete mine marks (x and y coordinates):");
             int[] input = Arrays.stream(scanner.nextLine().split("\\s+"))
@@ -18,12 +18,12 @@ public class Main {
                     .toArray();
             try {
                 mineField.markBomb(input);
-                mineField.printHiddemBombs();
+                mineField.printHiddenBombs();
             } catch (NumberIsNotBombException e){
                 System.out.println(e.getMessage());
             }
         }
-        mineField.printHiddemBombs();
+        mineField.printHiddenBombs();
         System.out.println("Congratulations! You found all the mines!");
     }
 }
