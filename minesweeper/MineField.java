@@ -87,7 +87,7 @@ public class MineField {
         }
     }
 
-    public void printHiddemBombs() {
+    public void printHiddenBombs() {
         for (int i = 0; i < this.noBombs.length; i++) {
             for (int j = 0; j < this.noBombs[i].length; j++) {
                 System.out.print(this.noBombs[i][j]);
