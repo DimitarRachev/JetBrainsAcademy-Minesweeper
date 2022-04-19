@@ -1,18 +1,20 @@
 package minesweeper;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Random;
 
 public class MineField {
     private int numMines;
     private String[][] field;
-    private String[][] noBombs;
+    private String[][] playerView;
 
     public MineField(int numMines) {
         this.numMines = numMines;
         field = populateField();
-        noBombs = copyField();
-        placeMines(numMines);
-        populateMinesCount();
+        playerView = copyField();
+//        placeMines(numMines);
+//        populateMinesCount();
     }
 
     private String[][] copyField() {
@@ -36,12 +38,11 @@ public class MineField {
         return field;
     }
 
-    public void populateMinesCount() {
+    private void populateMinesCount() {
         for (int i = 2; i < this.field.length - 1; i++) {
             for (int j = 2; j < this.field[i].length - 1; j++) {
                 if (!this.field[i][j].equals("X")) {
                     this.field[i][j] = calculateMinesCount(i, j);
-                    this.noBombs[i][j] = this.field[i][j];
                 }
             }
         }
@@ -65,12 +66,12 @@ public class MineField {
         return i >= 2 && i < this.field.length - 1 && j >= 2 && j < this.field[0].length - 1;
     }
 
-    private void placeMines(int numMines) {
+    private void placeMines(int numMines, int guessRow, int guessCol) {
         Random random = new Random();
         for (int i = 0; i < numMines; i++) {
             int r = random.nextInt(field.length - 2) + 2;
             int c = random.nextInt(field[0].length - 2) + 2;
-            if (this.field[r][c].equals(".")) {
+            if (!(r == guessRow && c == guessCol) && this.field[r][c].equals(".")) {
                 this.field[r][c] = "X";
             } else {
                 i--;
@@ -78,53 +79,93 @@ public class MineField {
         }
     }
 
-    public void printField() {
-        for (int i = 0; i < this.field.length; i++) {
-            for (int j = 0; j < this.field[i].length; j++) {
-                System.out.print(this.field[i][j]);
+    void printField() {
+        printAnyField(this.field);
+    }
+
+    void printPlayerView() {
+        printAnyField(this.playerView);
+    }
+
+    private void printAnyField(String[][] field) {
+        for (String[] strings : field) {
+            for (String string : strings) {
+                System.out.print(string);
             }
             System.out.println();
         }
     }
 
-    public void printHiddenBombs() {
-        for (int i = 0; i < this.noBombs.length; i++) {
-            for (int j = 0; j < this.noBombs[i].length; j++) {
-                System.out.print(this.noBombs[i][j]);
-            }
-            System.out.println();
+     void markBomb(int[] input)  {
+        //TODO indexes are replaced for testing
+        int r = input[0];
+        int c = input[1];
+        //TODO implement some index check
+        if (playerView[r][c].equals(".")) {
+            playerView[r][c] = "*";
+        } else if (playerView[r][c].equals("*")) {
+            playerView[r][c] = ".";
+        } else {
+            //TODO refactor message to include "/"
+//            throw new NumberIsNotBombException("There is a number here!");
+            System.out.println("There is a number here!");
         }
     }
 
-    public void hideBombs() {
-        for (int i = 0; i < noBombs.length; i++) {
-            for (int j = 0; j < noBombs.length; j++) {
-                if (noBombs[i][j].equals("X")) {
-                    noBombs[i][j] = ".";
+    void generateMines(int[] coordinates) {
+        int r = coordinates[0];
+        int c = coordinates[1];
+        placeMines(this.numMines, r, c);
+        populateMinesCount();
+
+    }
+
+    void guessFree(int[] coordinates) throws GameOverExeption {
+        Deque<int[]> stackCoordinates = new ArrayDeque<>();
+        stackCoordinates.push(coordinates);
+        while (!stackCoordinates.isEmpty()) {
+            processCoordinates(stackCoordinates.pop(), stackCoordinates);
+        }
+
+    }
+
+    private void processCoordinates(int[] coordinates, Deque<int[]> stackCoordinates) throws GameOverExeption {
+        int r = coordinates[0];
+        int c = coordinates[1];
+        if (field[r][c].matches("\\.")) {
+            playerView[r][c] = "/";
+            for (int i = r - 1; i <= r + 1; i++) {
+                for (int j = c - 1; j <= c + 1; j++) {
+                    //TODO think of something smarter
+                    if (indexesAreValid(i, j) && (playerView[i][j].matches("\\.") || playerView[i][j].matches("\\*"))) {
+                        stackCoordinates.push(new int[]{i, j});
+                    }
+                }
+            }
+        } else if (field[r][c].matches("X")) {
+            copyMines();
+            throw new GameOverExeption("You stepped on a mine and failed!");
+        } else if (field[r][c].matches("\\d")) {
+            playerView[r][c] = field[r][c];
+        }
+
+    }
+
+    private void copyMines() {
+        for (int i = 0; i < field.length; i++) {
+            for (int j = 0; j < field[i].length; j++) {
+                if (field[i][j].equals("X")) {
+                    playerView[i][j] = "X";
                 }
             }
         }
     }
 
-    public void markBomb(int[] input) throws NumberIsNotBombException {
-        //TODO indexes are replaced for testing
-        int r = input[1] + 1;
-        int c = input[0] + 1;
-        //TODO implement some index check
-        if (noBombs[r][c].equals(".")) {
-            noBombs[r][c] = "*";
-        } else if (noBombs[r][c].equals("*")) {
-            noBombs[r][c] = ".";
-        } else {
-            throw new NumberIsNotBombException("There is a number here!");
-        }
-    }
-
-    public boolean allBombsAreMarked() {
+    boolean allBombsAreMarked() {
         int bombFlagCount = 0;
-        for (int i = 2; i < noBombs.length - 1; i++) {
-            for (int j = 2; j < noBombs[i].length - 1; j++) {
-                if (noBombs[i][j].equals("*")) {
+        for (int i = 2; i < playerView.length - 1; i++) {
+            for (int j = 2; j < playerView[i].length - 1; j++) {
+                if (playerView[i][j].equals("*") || playerView[i][j].equals(".")) {
                     if (field[i][j].equals("X")) {
                         bombFlagCount++;
                     } else {
