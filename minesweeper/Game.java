@@ -22,8 +22,9 @@ public class Game {
         boolean firstMineGuest = false;
         while(!gameIsOver()) {
             System.out.println("Set/unset mines marks or claim a cell as free: ");
+            System.out.println("Use format \"row column free/mine\"");
             String[] tokens = scanner.nextLine().split("\\s+");
-            int[] coordinates = new int[]{Integer.parseInt(tokens[1]) + 1, Integer.parseInt(tokens[0]) + 1};
+            int[] coordinates = new int[]{Integer.parseInt(tokens[0]) + 1, Integer.parseInt(tokens[1]) + 1};
             if (tokens[2].equals("free")) {
                 if (!firstMineGuest) {
                     mineField.generateMines(coordinates);
